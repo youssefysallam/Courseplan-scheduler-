@@ -1,0 +1,21 @@
+[
+  {
+    "code": "CS341",
+    "title": "Computer Architecture",
+    "credits": 3,
+    "difficulty": 4,
+    "avgHoursPerWeek": 8,
+    "prereqs": ["CS240"],
+    "tags": ["systems"],
+    "sections": [
+      {
+        "id": "CS341-LEC-01",
+        "type": "LEC",
+        "timeSlots": [
+          { "day": "Mon", "startMin": 660, "endMin": 735 },
+          { "day": "Wed", "startMin": 660, "endMin": 735 }
+        ]
+      }
+    ]
+  }
+]

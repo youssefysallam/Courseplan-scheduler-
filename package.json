@@ -1,0 +1,16 @@
+{
+  "name": "courseplan-scheduler",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "dev:web": "pnpm --filter @courseplan/web dev",
+    "dev:api": "pnpm --filter @courseplan/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}
