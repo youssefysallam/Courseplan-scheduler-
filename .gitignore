@@ -7,3 +7,12 @@ build
 !.env.example
 coverage
 .DS_Store
+
+# pnpm
+.pnpm-store
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

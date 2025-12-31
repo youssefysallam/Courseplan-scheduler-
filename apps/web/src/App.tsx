@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCourses } from "./api/courses";
+import { generatePlan, type GeneratePlanResponse } from "./api/plan";
 
 type Course = {
   code: string;
@@ -11,13 +12,34 @@ type Course = {
   tags: string[];
 };
 
+const LS_WISHLIST = "courseplan:wishlist";
+const LS_COMPLETED = "courseplan:completed";
+
 export default function App() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [completed, setCompleted] = useState<string[]>([]);
+
+  const [completedInput, setCompletedInput] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [minCredits, setMinCredits] = useState(12);
+  const [maxCredits, setMaxCredits] = useState(16);
+
+  const [plan, setPlan] = useState<GeneratePlanResponse | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+
+  /* ---------- initial load ---------- */
   useEffect(() => {
+    const savedWishlist = localStorage.getItem(LS_WISHLIST);
+    const savedCompleted = localStorage.getItem(LS_COMPLETED);
+
+    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+    if (savedCompleted) setCompleted(JSON.parse(savedCompleted));
+
     let alive = true;
 
     (async () => {
@@ -40,12 +62,55 @@ export default function App() {
     };
   }, []);
 
+  /* ---------- persistence ---------- */
+  useEffect(() => {
+    localStorage.setItem(LS_WISHLIST, JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_COMPLETED, JSON.stringify(completed));
+  }, [completed]);
+
   const wishlistSet = useMemo(() => new Set(wishlist), [wishlist]);
+  const completedSet = useMemo(() => new Set(completed), [completed]);
 
   function toggleWishlist(code: string) {
     setWishlist((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
     );
+  }
+
+  function toggleCompleted(code: string) {
+    setCompleted((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+    );
+  }
+
+  function addCompletedByCode() {
+    const code = completedInput.trim().toUpperCase();
+    if (!code || completed.includes(code)) return;
+
+    setCompleted((prev) => [...prev, code]);
+    setCompletedInput("");
+  }
+
+  async function onGeneratePlan() {
+    try {
+      setPlanError(null);
+      setPlanLoading(true);
+
+      const result = await generatePlan({
+        wishlist,
+        completed,
+        constraints: { minCredits, maxCredits }
+      });
+
+      setPlan(result);
+    } catch (e) {
+      setPlanError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPlanLoading(false);
+    }
   }
 
   return (
@@ -59,12 +124,146 @@ export default function App() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <div className="text-sm text-neutral-400">Wishlist</div>
-            <div className="text-2xl font-semibold">{wishlist.length}</div>
+          <div className="flex gap-3">
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+              <div className="text-sm text-neutral-400">Wishlist</div>
+              <div className="text-2xl font-semibold">{wishlist.length}</div>
+            </div>
+
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+              <div className="text-sm text-neutral-400">Completed</div>
+              <div className="text-2xl font-semibold">{completed.length}</div>
+            </div>
           </div>
         </header>
 
+        {/* Planner controls + plan output */}
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {/* Constraints */}
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="text-sm text-neutral-400">Constraints</div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="text-sm text-neutral-300">
+                Min credits
+                <input
+                  type="number"
+                  value={minCredits}
+                  onChange={(e) => setMinCredits(Number(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100"
+                />
+              </label>
+
+              <label className="text-sm text-neutral-300">
+                Max credits
+                <input
+                  type="number"
+                  value={maxCredits}
+                  onChange={(e) => setMaxCredits(Number(e.target.value))}
+                  className="mt-1 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100"
+                />
+              </label>
+            </div>
+
+            {/* Manual completed entry */}
+            <div className="mt-4">
+              <div className="text-sm text-neutral-400 mb-1">Mark completed by code</div>
+              <div className="flex gap-2">
+                <input
+                  value={completedInput}
+                  onChange={(e) => setCompletedInput(e.target.value)}
+                  placeholder="CS240"
+                  className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-neutral-100"
+                />
+                <button
+                  onClick={addCompletedByCode}
+                  className="rounded-lg border border-blue-700 bg-blue-600/20 px-3 py-2 text-sm font-medium text-blue-200 hover:bg-blue-600/30"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={onGeneratePlan}
+              disabled={planLoading || wishlist.length === 0}
+              className="mt-4 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-4 py-2 text-sm font-medium hover:bg-neutral-900 disabled:opacity-50"
+            >
+              {planLoading ? "Generating..." : "Generate Plan"}
+            </button>
+
+            {planError && <div className="mt-3 text-sm text-red-300">{planError}</div>}
+          </div>
+
+          {/* Generated plan */}
+          <div className="md:col-span-2 rounded-xl border border-neutral-800 bg-neutral-900 p-5">
+            <div className="text-sm text-neutral-400">Generated Plan</div>
+
+            {!plan && (
+              <div className="mt-3 text-neutral-400">
+                Click “Generate Plan” to see selected courses + explanation.
+              </div>
+            )}
+
+            {plan && (
+              <div className="mt-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-neutral-300">
+                    Plan ID: <span className="text-neutral-100">{plan.planId}</span>
+                  </span>
+                  <span className="text-sm text-neutral-300">
+                    Score: <span className="text-neutral-100">{plan.score}</span>
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-sm text-neutral-400">Selected courses</div>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {plan.selectedCourseCodes.map((code) => (
+                      <span
+                        key={code}
+                        className="text-xs rounded-full border border-neutral-700 bg-neutral-950 px-2 py-1 text-neutral-200"
+                      >
+                        {code}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 text-sm text-neutral-300">
+                    Total credits:{" "}
+                    <span className="text-neutral-100">{plan.totalCredits}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <div className="text-sm text-neutral-400">Why this plan</div>
+                  <ul className="mt-2 list-disc pl-5 text-sm text-neutral-200 space-y-1">
+                    {plan.explanation.map((line, idx) => (
+                      <li key={idx}>{line}</li>
+                    ))}
+                  </ul>
+
+                  {plan.rejected.length > 0 && (
+                    <div className="mt-4">
+                      <div className="text-sm text-neutral-400">Rejected</div>
+                      <ul className="mt-2 list-disc pl-5 text-sm text-neutral-200 space-y-1">
+                        {plan.rejected.map((r) => (
+                          <li key={r.courseCode}>
+                            <span className="font-medium">{r.courseCode}:</span>{" "}
+                            {r.reason}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Course list */}
         <div className="mt-8">
           {loading && (
             <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-6">
@@ -82,6 +281,8 @@ export default function App() {
             <div className="grid gap-4">
               {courses.map((c) => {
                 const inWish = wishlistSet.has(c.code);
+                const isCompleted = completedSet.has(c.code);
+
                 return (
                   <div
                     key={c.code}
@@ -118,16 +319,29 @@ export default function App() {
                       ) : null}
                     </div>
 
-                    <button
-                      onClick={() => toggleWishlist(c.code)}
-                      className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium border ${
-                        inWish
-                          ? "bg-emerald-600/20 border-emerald-600 text-emerald-200"
-                          : "bg-neutral-950 border-neutral-700 text-neutral-200 hover:bg-neutral-900"
-                      }`}
-                    >
-                      {inWish ? "In wishlist ✓" : "Add to wishlist"}
-                    </button>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => toggleCompleted(c.code)}
+                        className={`rounded-lg px-4 py-2 text-sm font-medium border ${
+                          isCompleted
+                            ? "bg-blue-600/20 border-blue-600 text-blue-200"
+                            : "bg-neutral-950 border-neutral-700 text-neutral-200 hover:bg-neutral-900"
+                        }`}
+                      >
+                        {isCompleted ? "Completed ✓" : "Mark completed"}
+                      </button>
+
+                      <button
+                        onClick={() => toggleWishlist(c.code)}
+                        className={`rounded-lg px-4 py-2 text-sm font-medium border ${
+                          inWish
+                            ? "bg-emerald-600/20 border-emerald-600 text-emerald-200"
+                            : "bg-neutral-950 border-neutral-700 text-neutral-200 hover:bg-neutral-900"
+                        }`}
+                      >
+                        {inWish ? "In wishlist ✓" : "Add to wishlist"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -136,7 +350,7 @@ export default function App() {
         </div>
 
         <footer className="mt-10 text-sm text-neutral-500">
-          Next: completed courses + constraints form + Generate Plan endpoint.
+          Next: dataset expansion + real schedule construction (section conflicts).
         </footer>
       </div>
     </div>
