@@ -11,6 +11,7 @@ export type SelectedSection = {
 export type GeneratedPlan = {
   planId: string;
   selectedCourseCodes: string[];
+  selectedSections: SelectedSection[];
   totalCredits: number;
   score: number;
   explanation: string[];

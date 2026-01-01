@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchCourses } from "./api/courses";
 import { generatePlan, type GeneratePlanResponse } from "./api/plan";
+import { planToCalendarEvents } from "./calendar/normalize";
+
+type TimeSlot = {
+  day: string;
+  startMin: number;
+  endMin: number;
+};
+
+type CourseSection = {
+  sectionId: string;
+  timeSlots: TimeSlot[];
+};
 
 type Course = {
   code: string;
@@ -10,6 +22,7 @@ type Course = {
   avgHoursPerWeek: number;
   prereqs: string[];
   tags: string[];
+  sections?: CourseSection[];
 };
 
 const LS_WISHLIST = "courseplan:wishlist";
@@ -31,6 +44,8 @@ export default function App() {
   const [plan, setPlan] = useState<GeneratePlanResponse | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState<string | null>(null);
+
+  const [showCalendar, setShowCalendar] = useState(false);
 
   /* ---------- initial load ---------- */
   useEffect(() => {
@@ -73,6 +88,18 @@ export default function App() {
 
   const wishlistSet = useMemo(() => new Set(wishlist), [wishlist]);
   const completedSet = useMemo(() => new Set(completed), [completed]);
+
+  const calendarEvents = useMemo(() => {
+    if (!plan) return [];
+
+    // Adapter layer: the calendar normalizer expects courseCode, but the UI uses code.
+    const adaptedCourses = courses.map((c) => ({
+      courseCode: c.code,
+      sections: Array.isArray(c.sections) ? c.sections : [],
+    }));
+
+    return planToCalendarEvents(plan as any, adaptedCourses as any);
+  }, [plan, courses]);
 
   function toggleWishlist(code: string) {
     setWishlist((prev) =>
@@ -212,7 +239,26 @@ export default function App() {
                     Plan ID: <span className="text-neutral-100">{plan.planId}</span>
                   </span>
                   <span className="text-sm text-neutral-300">
-                    Score: <span className="text-neutral-100">{plan.score}</span>
+                    Score:{" "}
+                    <span className="text-neutral-100">
+                      {typeof plan.score === "number" ? plan.score.toFixed(2) : String(plan.score ?? "—")}
+                    </span>
+                  </span>
+
+                  <span className="text-sm text-neutral-300">
+                    Candidates:{" "}
+                    <span className="text-neutral-100">
+                      {plan.candidatesConsidered ?? "—"}
+                    </span>
+                  </span>
+
+                  <span className="text-sm text-neutral-300">
+                    Score breakdown:{" "}
+                    <span className="text-neutral-100">
+                      {plan.scoreBreakdown
+                        ? `credits=${plan.scoreBreakdown.credits}, gaps=${plan.scoreBreakdown.gaps}, days=${plan.scoreBreakdown.days}, balance=${plan.scoreBreakdown.balance}`
+                        : "—"}
+                    </span>
                   </span>
                 </div>
 
@@ -255,6 +301,26 @@ export default function App() {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Calendar wiring checkpoint (no calendar UI yet) */}
+                <div className="mt-5 pt-4 border-t border-neutral-800">
+                  <button
+                    onClick={() => setShowCalendar((v) => !v)}
+                    className="rounded-lg border border-neutral-700 bg-neutral-950 px-4 py-2 text-sm font-medium hover:bg-neutral-900"
+                  >
+                    {showCalendar ? "Hide Weekly Schedule" : "Show Weekly Schedule"}
+                  </button>
+
+                  {showCalendar && (
+                    <div className="mt-3 text-sm text-neutral-300">
+                      Calendar events resolved:{" "}
+                      <span className="text-neutral-100 font-medium">{calendarEvents.length}</span>
+                      <div className="mt-1 text-xs text-neutral-500">
+                        This is a wiring checkpoint. Next step will render the weekly grid using these events.
+                      </div>
                     </div>
                   )}
                 </div>
