@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchCourses } from "./api/courses";
 import { generatePlan, type GeneratePlanResponse } from "./api/plan";
 import { planToCalendarEvents } from "./calendar/normalize";
+import DayColumn from "./calendar/DayColumn";
+import { computeWindow } from "./calendar/window";
 
 type TimeSlot = {
   day: string;
@@ -10,7 +12,7 @@ type TimeSlot = {
 };
 
 type CourseSection = {
-  sectionId: string;
+  id: string;
   timeSlots: TimeSlot[];
 };
 
@@ -89,17 +91,21 @@ export default function App() {
   const wishlistSet = useMemo(() => new Set(wishlist), [wishlist]);
   const completedSet = useMemo(() => new Set(completed), [completed]);
 
-  const calendarEvents = useMemo(() => {
+const calendarEvents = useMemo(() => {
     if (!plan) return [];
 
-    // Adapter layer: the calendar normalizer expects courseCode, but the UI uses code.
-    const adaptedCourses = courses.map((c) => ({
-      courseCode: c.code,
-      sections: Array.isArray(c.sections) ? c.sections : [],
-    }));
+    // Optional quick sanity checks while debugging "0 events"
+    // Remove after you confirm it works.
+    console.log("plan.selectedSections:", (plan as any)?.selectedSections);
+    console.log("courses[0].code:", (courses as any)?.[0]?.code);
+    console.log("courses[0].sections[0]:", (courses as any)?.[0]?.sections?.[0]);
 
-    return planToCalendarEvents(plan as any, adaptedCourses as any);
+    return planToCalendarEvents(plan as any, courses as any);
   }, [plan, courses]);
+
+  const calendarWindow = useMemo(() => {
+    return computeWindow(calendarEvents);
+  }, [calendarEvents]);
 
   function toggleWishlist(code: string) {
     setWishlist((prev) =>
@@ -314,15 +320,30 @@ export default function App() {
                     {showCalendar ? "Hide Weekly Schedule" : "Show Weekly Schedule"}
                   </button>
 
-                  {showCalendar && (
-                    <div className="mt-3 text-sm text-neutral-300">
+                {showCalendar && (
+                  <div className="mt-3">
+                    <div className="text-sm text-neutral-300">
                       Calendar events resolved:{" "}
                       <span className="text-neutral-100 font-medium">{calendarEvents.length}</span>
-                      <div className="mt-1 text-xs text-neutral-500">
-                        This is a wiring checkpoint. Next step will render the weekly grid using these events.
+                    </div>
+
+                    <div className="mt-4" style={{ overflowX: "auto" }}>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <div style={{ display: "flex", gap: 12 }}>
+                          {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => (
+                            <DayColumn
+                              key={d}
+                              day={d as any}
+                              events={calendarEvents}
+                              windowStartMin={calendarWindow.startMin}
+                              windowEndMin={calendarWindow.endMin}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
                 </div>
               </div>
             )}

@@ -1,4 +1,4 @@
-import type { Course, PlanResult, Constraints, Section } from "../types"; // adjust paths to your existing types
+import type { Course, Constraints, Section, GeneratedPlan } from ".."; // adjust paths to your existing types
 import type { PlanScore, PlanScoreBreakdown, PlanScoringWeights } from "../types/score";
 
 type Meeting = {
@@ -25,7 +25,7 @@ function sectionToMeetings(section: Section): Meeting[] {
   }));
 }
 
-function buildSelectedMeetings(plan: PlanResult, coursesByCode: Map<string, Course>): Map<string, Meeting[]> {
+function buildSelectedMeetings(plan: GeneratedPlan, coursesByCode: Map<string, Course>): Map<string, Meeting[]> {
   const byDay = new Map<string, Meeting[]>();
 
   for (const sel of plan.selectedSections) {
@@ -95,7 +95,7 @@ function weightOf(weights: PlanScoringWeights | undefined, key: keyof PlanScoreB
  * Higher score is better.
  */
 export function scorePlan(args: {
-  plan: PlanResult;
+  plan: GeneratedPlan;
   courses: Course[];
   constraints: Constraints;
   weights?: PlanScoringWeights;
