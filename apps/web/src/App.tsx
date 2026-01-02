@@ -3,7 +3,8 @@ import { fetchCourses } from "./api/courses";
 import { generatePlan, type GeneratePlanResponse } from "./api/plan";
 import { planToCalendarEvents } from "./calendar/normalize";
 import DayColumn from "./calendar/DayColumn";
-import { computeWindow } from "./calendar/window";
+import { DAY_START_MIN, DAY_END_MIN } from "./calendar/constants";
+import WeekGrid from "./calendar/WeekGrid";
 
 type TimeSlot = {
   day: string;
@@ -103,9 +104,10 @@ const calendarEvents = useMemo(() => {
     return planToCalendarEvents(plan as any, courses as any);
   }, [plan, courses]);
 
-  const calendarWindow = useMemo(() => {
-    return computeWindow(calendarEvents);
-  }, [calendarEvents]);
+const calendarWindow = useMemo(() => {
+    return { startMin: DAY_START_MIN, endMin: DAY_END_MIN };
+  }, []);
+
 
   function toggleWishlist(code: string) {
     setWishlist((prev) =>
@@ -327,20 +329,12 @@ const calendarEvents = useMemo(() => {
                       <span className="text-neutral-100 font-medium">{calendarEvents.length}</span>
                     </div>
 
-                    <div className="mt-4" style={{ overflowX: "auto" }}>
-                      <div style={{ display: "flex", gap: 12 }}>
-                        <div style={{ display: "flex", gap: 12 }}>
-                          {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => (
-                            <DayColumn
-                              key={d}
-                              day={d as any}
-                              events={calendarEvents}
-                              windowStartMin={calendarWindow.startMin}
-                              windowEndMin={calendarWindow.endMin}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                    <div className="mt-4">
+                      <WeekGrid
+                        events={calendarEvents}
+                        windowStartMin={calendarWindow.startMin}
+                        windowEndMin={calendarWindow.endMin}
+                      />
                     </div>
                   </div>
                 )}

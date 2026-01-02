@@ -30,8 +30,10 @@ export default function DayColumn({
   const totalHeightPx = (windowEndMin - windowStartMin) * PX_PER_MIN;
 
   return (
-    <div style={{ width: 220 }}>
-      <div style={{ padding: "8px 0", fontSize: 12, opacity: 0.8 }}>{day}</div>
+    <div style={{ width: "100%" }}>
+      <div style={{ height: 28, display: "flex", alignItems: "center", fontSize: 12, opacity: 0.8 }}>
+        {day}
+        </div>
 
       <div
         style={{
@@ -41,6 +43,39 @@ export default function DayColumn({
           background: "#0b0b0b",
         }}
       >
+        {/* Hour grid */}
+        {Array.from({
+        length: Math.ceil((windowEndMin - windowStartMin) / 60) + 1,
+        }).map((_, i) => (
+        <div
+            key={`h-${i}`}
+            style={{
+            position: "absolute",
+            top: i * 60 * PX_PER_MIN,
+            left: 0,
+            right: 0,
+            borderTop: "1px solid rgba(255,255,255,0.7)",
+            zIndex: 0,
+            }}
+        />
+        ))}
+
+        {/* Half-hour grid */}
+        {Array.from({
+        length: Math.ceil((windowEndMin - windowStartMin) / 60),
+        }).map((_, i) => (
+        <div
+            key={`hh-${i}`}
+            style={{
+            position: "absolute",
+            top: i * 60 * PX_PER_MIN + 30 * PX_PER_MIN,
+            left: 0,
+            right: 0,
+            borderTop: "1px solid rgba(255,255,255,0.27)",
+            zIndex: 0,
+            }}
+        />
+        ))}
         {dayEvents.map((e) => {
           const box = eventToBox(e, windowStartMin, windowEndMin);
           if (!box) return null;
@@ -59,6 +94,7 @@ export default function DayColumn({
                 background: "#14532d",
                 border: "1px solid rgba(255,255,255,0.08)",
                 overflow: "hidden",
+                zIndex: 1,
               }}
             >
               <div style={{ fontSize: 12, fontWeight: 600 }}>{e.labelLine1}</div>
