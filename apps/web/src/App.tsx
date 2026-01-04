@@ -168,9 +168,6 @@ export default function App() {
         <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/60 text-sm font-semibold">
-                UMB
-              </span>
               <h1 className="text-3xl font-semibold tracking-tight">
                 CoursePlan Scheduler
               </h1>
