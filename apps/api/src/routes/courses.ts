@@ -9,7 +9,7 @@ export function coursesRouter() {
     try {
       const rel = process.env.DATASET_PATH ?? "../../packages/dataset/data/courses.sample.json";
 
-      // IMPORTANT: resolve from the API project root, not from dist/src
+      // resolve from the API project root
       const apiRoot = process.cwd();
       const abs = path.resolve(apiRoot, rel);
 

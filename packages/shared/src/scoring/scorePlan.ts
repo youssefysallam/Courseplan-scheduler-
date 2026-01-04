@@ -91,9 +91,7 @@ function weightOf(weights: PlanScoringWeights | undefined, key: keyof PlanScoreB
   return weights?.[key] ?? fallback;
 }
 
-/**
- * Higher score is better.
- */
+/* Higher score is better */
 export function scorePlan(args: {
   plan: GeneratedPlan;
   courses: Course[];
@@ -109,7 +107,7 @@ export function scorePlan(args: {
   const dailyMins = calcDailyMinutes(byDay);
   const balancePenalty = stddev(dailyMins);
 
-  // Credits: prefer meeting minCredits; also slight reward for higher credits (within maxCredits)
+  // Credits: prefer meeting minCredits, also slight reward for higher credits (within maxCredits)
   // If below minCredits, reward closer to minCredits (less negative).
   const minC = constraints.minCredits ?? 0;
   const creditDelta = plan.totalCredits - minC;

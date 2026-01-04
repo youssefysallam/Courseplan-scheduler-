@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020"],
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
     "declaration": true,
     "declarationMap": true,
     "outDir": "dist",

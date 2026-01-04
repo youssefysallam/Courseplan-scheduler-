@@ -1,6 +1,7 @@
 import type { CalendarDay, CalendarEvent } from "./types";
 import { PX_PER_MIN } from "./constants";
 import { eventToBox } from "./geometry";
+import { getCourseColor } from "@courseplan/shared";
 
 type Props = {
   day: CalendarDay;
@@ -80,6 +81,8 @@ export default function DayColumn({
           const box = eventToBox(e, windowStartMin, windowEndMin);
           if (!box) return null;
 
+          const colors = getCourseColor(e.courseCode);
+
           return (
             <div
               key={e.id}
@@ -91,14 +94,19 @@ export default function DayColumn({
                 height: box.heightPx,
                 borderRadius: 8,
                 padding: 8,
-                background: "#14532d",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: colors.bg,
+                border: `1px solid ${colors.border}`,
+                color: colors.text,
                 overflow: "hidden",
                 zIndex: 1,
               }}
             >
-              <div style={{ fontSize: 12, fontWeight: 600 }}>{e.labelLine1}</div>
-              <div style={{ fontSize: 11, opacity: 0.85 }}>{e.labelLine2}</div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>
+                {e.labelLine1}
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.9 }}>
+                {e.labelLine2}
+              </div>
             </div>
           );
         })}
