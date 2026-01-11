@@ -281,6 +281,14 @@ packages/shared/dataset/data/courses.sample.json
 7. **Frontend rendering**
    - Display summary, breakdown, and calendar visualization
 
+## Demos
+
+### Full Video Demo
+![CoursePlan Scheduler Demo](Demos/Demo.gif)
+
+### Rejected Screenshot Demo
+![Rejected Schedule](Demos/SS_Rejected.png)
+
 ## Setup & Running Locally
 
 ### Install dependencies

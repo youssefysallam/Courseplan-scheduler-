@@ -1,13 +1,13 @@
 // types
-export * from "./types/course";
-export * from "./types/constraints";
-export * from "./types/plan";
-export * from "./types/score";
+// types
+export * from "./types/course.js";
+export * from "./types/constraints.js";
+export * from "./types/plan.js";
+export * from "./types/score.js";
 
 // utils
-export * from "./utils/time";
-export * from "./utils/overlaps";
+export * from "./utils/time.js";
+export * from "./utils/overlaps.js";
 
-export * from "./scoring/scorePlan";
-
-export * from "./ui/courseColors";
+export * from "./scoring/scorePlan.js";
+export * from "./ui/courseColors.js";
