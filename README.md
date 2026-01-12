@@ -1,4 +1,4 @@
-# CoursePlan Scheduler
+# 📊 CoursePlan Scheduler
 
 **CoursePlan Scheduler** is a deterministic course scheduling system that generates a **conflict-free weekly plan** from a student’s wishlist, completed courses, and credit constraints.  
 It operates on **real section meeting times**, enumerates valid schedules using backtracking, and selects the best plan using a **deterministic scoring system**.
@@ -7,7 +7,13 @@ The project is implemented as a **pnpm monorepo** with a TypeScript Express API,
 
 ---
 
-## Demo (What the user sees)
+## 📽️ Demo (What the user sees)
+
+### Full Video Demo
+![CoursePlan Scheduler Demo](Demos/Demo.gif)
+
+### Rejected Screenshot Demo
+![Rejected Schedule](Demos/SS_Rejected.png)
 
 - Browse available courses loaded from the API
 - Add/remove courses from a wishlist
@@ -24,7 +30,7 @@ The project is implemented as a **pnpm monorepo** with a TypeScript Express API,
 
 ---
 
-## Repository Structure (pnpm monorepo)
+## 🗂️ Repository Structure (pnpm monorepo)
 
 ```text
 courseplan-scheduler/
@@ -59,7 +65,7 @@ courseplan-scheduler/
 
 ---
 
-## Core Scheduling Features (Phase A)
+## 🧠 Core Scheduling Features (Phase A)
 
 The scheduler enforces **hard constraints first** before any optimization occurs.
 
@@ -96,7 +102,7 @@ timeSlots: [
 ]
 ```
 
-## Optimization & Scoring (Phase B)
+## ⚙️ Optimization & Scoring (Phase B)
 
 Once valid schedules are generated, they are **ranked deterministically**.
 
@@ -123,7 +129,7 @@ Among eligible schedules, scoring considers:
 
 ---
 
-## Generated Plan Output
+## 📤 Generated Plan Output
 
 The API returns a fully explained plan object:
 
@@ -146,7 +152,7 @@ GeneratedPlan {
 }
 ```
 
-## Frontend Features Implemented
+## 🖥️ Frontend Features Implemented
 
 ### Course interaction
 
@@ -177,7 +183,7 @@ GeneratedPlan {
 
 ---
 
-## Weekly Calendar Visualization (Read-only)
+## 🗓️ Weekly Calendar Visualization (Read-only)
 
 - Toggle: **Show Weekly Schedule / Hide Weekly Schedule**
 - Fixed **Mon–Fri** columns
@@ -201,7 +207,7 @@ apps/web/src/calendar/
 └── constants.ts
 ```
 
-## Backend API (High-Level)
+## 📡Backend API
 
 ### GET `/courses`
 
@@ -222,7 +228,7 @@ Generates a schedule based on user input.
 
 - `GeneratedPlan` object (see shape above)
 
-## Dataset Format
+## 📄 Dataset Format
 
 Sample dataset lives at:
 
@@ -252,7 +258,7 @@ packages/shared/dataset/data/courses.sample.json
 - Each section defines one or more `timeSlots`
 - All conflict detection operates on `timeSlots`
 
-## How It Works (End-to-End)
+## 🔄 How It Works (End-to-End)
 
 1. **Filter eligible courses**
    - Remove completed courses
@@ -281,22 +287,14 @@ packages/shared/dataset/data/courses.sample.json
 7. **Frontend rendering**
    - Display summary, breakdown, and calendar visualization
 
-## Demos
-
-### Full Video Demo
-![CoursePlan Scheduler Demo](Demos/Demo.gif)
-
-### Rejected Screenshot Demo
-![Rejected Schedule](Demos/SS_Rejected.png)
-
-## Setup & Running Locally
+## 🛠️ Setup & Running Locally
 
 ### Install dependencies
 
 ```bash
 pnpm install
 ```
-### Build shared packahe
+### Build shared package
 
 ```bash
 pnpm -C packages/shared build
