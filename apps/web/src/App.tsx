@@ -60,6 +60,7 @@ export default function App() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [courseSearch, setCourseSearch] = useState("");
 
   const [minCredits, setMinCredits] = useState(12);
   const [maxCredits, setMaxCredits] = useState(16);
@@ -110,13 +111,19 @@ export default function App() {
 
   const calendarEvents = useMemo(() => {
     if (!plan) return [];
-
-    console.log("plan.selectedSections:", (plan as any)?.selectedSections);
-    console.log("courses[0].code:", (courses as any)?.[0]?.code);
-    console.log("courses[0].sections[0]:", (courses as any)?.[0]?.sections?.[0]);
-
     return planToCalendarEvents(plan as any, courses as any);
   }, [plan, courses]);
+
+  const filteredCourses = useMemo(() => {
+    const q = courseSearch.trim().toLowerCase();
+    if (!q) return courses;
+    return courses.filter(
+      (c) =>
+        c.code.toLowerCase().includes(q) ||
+        c.title.toLowerCase().includes(q) ||
+        c.tags?.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [courses, courseSearch]);
 
   const calendarWindow = useMemo(() => {
     return { startMin: DAY_START_MIN, endMin: DAY_END_MIN };
@@ -167,8 +174,13 @@ export default function App() {
       <div className="relative mx-auto max-w-7xl px-6 py-10">
         <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2">
-              <h1 className="text-3xl font-semibold tracking-tight">
+            <div className="inline-flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/25">
+                <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">
                 CoursePlan Scheduler
               </h1>
             </div>
@@ -274,10 +286,20 @@ export default function App() {
                     Add courses to wishlist and mark completed.
                   </p>
                 </div>
-                <Badge>{courses.length} total</Badge>
+                <Badge>{courseSearch ? `${filteredCourses.length} / ${courses.length}` : `${courses.length} total`}</Badge>
               </div>
 
-              <div className="mt-5 max-h-[68vh] overflow-y-auto pr-1 space-y-3">
+              <div className="mt-4">
+                <input
+                  type="search"
+                  value={courseSearch}
+                  onChange={(e) => setCourseSearch(e.target.value)}
+                  placeholder="Search by code, title, or tag…"
+                  className="w-full rounded-2xl border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm text-neutral-100 placeholder-neutral-600 outline-none focus:border-neutral-600"
+                />
+              </div>
+
+              <div className="mt-3 max-h-[68vh] overflow-y-auto pr-1 space-y-3">
                 {loading && (
                   <div className="rounded-2xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-sm text-neutral-300">
                     Loading courses…
@@ -290,9 +312,15 @@ export default function App() {
                   </div>
                 )}
 
+                {!loading && !error && filteredCourses.length === 0 && (
+                  <div className="rounded-2xl border border-neutral-800 bg-neutral-950 px-4 py-3 text-sm text-neutral-400">
+                    No courses match &ldquo;{courseSearch}&rdquo;
+                  </div>
+                )}
+
                 {!loading &&
                   !error &&
-                  courses.map((c) => {
+                  filteredCourses.map((c) => {
                     const inWish = wishlistSet.has(c.code);
                     const isCompleted = completedSet.has(c.code);
 

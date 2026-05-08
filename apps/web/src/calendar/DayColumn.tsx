@@ -18,16 +18,6 @@ export default function DayColumn({
 }: Props) {
   const dayEvents = events.filter((e) => e.day === day);
 
-  // temp debug (remove later)
-  console.log(
-    day,
-    dayEvents.map((e) => ({
-      course: e.courseCode,
-      startMin: e.startMin,
-      endMin: e.endMin,
-    }))
-  );
-
   const totalHeightPx = (windowEndMin - windowStartMin) * PX_PER_MIN;
 
   return (
@@ -55,7 +45,7 @@ export default function DayColumn({
             top: i * 60 * PX_PER_MIN,
             left: 0,
             right: 0,
-            borderTop: "1px solid rgba(255,255,255,0.7)",
+            borderTop: "1px solid rgba(255,255,255,0.1)",
             zIndex: 0,
             }}
         />
