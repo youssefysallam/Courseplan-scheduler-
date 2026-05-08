@@ -1,310 +1,137 @@
-# 📊 CoursePlan Scheduler
+# CoursePlan Scheduler
 
-**CoursePlan Scheduler** is a deterministic course scheduling system that generates a **conflict-free weekly plan** from a student’s wishlist, completed courses, and credit constraints.  
-It operates on **real section meeting times**, enumerates valid schedules using backtracking, and selects the best plan using a **deterministic scoring system**.
-
-The project is implemented as a **pnpm monorepo** with a TypeScript Express API, a React + Vite frontend, and a shared scheduling/scoring package.
+A deterministic course scheduling system that generates a conflict-free weekly plan from a student's wishlist, completed courses, and credit constraints. Built as a TypeScript pnpm monorepo with an Express API, React + Vite frontend, and a shared scheduling/scoring package.
 
 ---
 
-## 📽️ Demo (What the user sees)
+## Demo
 
-### Full Video Demo
 ![CoursePlan Scheduler Demo](Demos/Demo.gif)
 
-### Rejected Screenshot Demo
-![Rejected Schedule](Demos/SS_Rejected.png)
+---
 
-- Browse available courses loaded from the API
-- Add/remove courses from a wishlist
-- Mark completed courses by course code
-- Set minimum and maximum credit constraints
-- Generate a schedule with one click
-- View:
-  - selected courses and sections
-  - total credits
-  - overall score and score breakdown
-  - textual explanation of why the plan was chosen
-  - rejected courses with explicit reasons
-- Toggle a **read-only weekly calendar** (Mon–Fri, 8am–8pm) showing the final schedule visually
+## How it works
+
+1. **Browse courses** — load the full catalog with credit counts, difficulty, average hours per week, and prerequisites
+2. **Build a wishlist** — toggle courses in; mark completed ones to satisfy prerequisites automatically
+3. **Set constraints** — min/max credit bounds for the semester
+4. **Generate plan** — the API enumerates valid section combinations via backtracking, scores each candidate, and returns the highest-scoring conflict-free schedule with an explanation
+
+### Scheduling algorithm
+
+```
+Wishlist + Constraints
+         │
+         ▼
+Backtracking enumeration (section combinations × time slots)
+  → prune on time conflicts
+  → prune on prerequisite violations
+         │
+         ▼
+Score each candidate plan:
+  credits_score  ─ distance from target credit range
+  gap_score      ─ minimize idle time between classes
+  days_score     ─ favor fewer class days
+  balance_score  ─ spread hours across the week evenly
+         │
+         ▼
+Return top plan + explanation + rejected list
+```
+
+All scheduling logic is deterministic — no LLM, no randomness. The same wishlist and constraints always produce the same plan.
 
 ---
 
-## 🗂️ Repository Structure (pnpm monorepo)
+## Key Features
 
-```text
-courseplan-scheduler/
-├── apps/
-│   ├── api/                  # Express API (TypeScript, ts-node-dev)
-│   └── web/                  # Vite + React + TypeScript frontend
-│
-├── packages/
-│   └── shared/               # Shared types/utils/scheduling/scoring
-│       └── dataset/
-│           └── data/
-│               └── courses.sample.json
-│
-├── pnpm-workspace.yaml
-└── package.json
-```
-### Key packages
-
-- **apps/api**  
-  Express server exposing course data and plan generation endpoints.
-
-- **apps/web**  
-  Frontend UI for building a wishlist, generating a plan, and visualizing the weekly schedule.
-
-- **packages/shared**  
-  Core domain logic:
-  - shared TypeScript types
-  - prerequisite validation
-  - conflict detection
-  - backtracking candidate generation
-  - deterministic scoring
+- **Conflict detection** — no two selected sections overlap on the weekly calendar
+- **Prerequisite enforcement** — completed courses mark prerequisites as satisfied
+- **Multi-factor scoring** — four weighted components (credits, gaps, days, balance) with transparent breakdown in the response
+- **Rejection explanations** — every excluded course gets a human-readable reason
+- **Live course search** — filter by code, title, or tag in real time
+- **Weekly calendar view** — generated plan renders as a draggable-free time grid with per-course color coding
 
 ---
 
-## 🧠 Core Scheduling Features (Phase A)
+## Tech Stack
 
-The scheduler enforces **hard constraints first** before any optimization occurs.
-
-### Implemented constraints
-
-- **Prerequisite checking**
-  - Courses are excluded if prerequisites are not satisfied by completed courses.
-
-- **Completed course filtering**
-  - Courses already completed cannot be selected again.
-
-- **Credit constraints**
-  - Enforces `minCredits` and `maxCredits`.
-
-- **Section-level conflict detection**
-  - Conflicts are checked using real section meeting times.
-  - Conflicts are detected at the **section level**, not course level.
-
-- **Backtracking candidate generation**
-  - Valid schedules are generated via backtracking.
-  - Often produces **50+ candidate schedules** depending on input.
-
-### Time representation
-
-Sections define meeting times using `timeSlots`:
-
-```ts
-timeSlots: [
-  {
-    day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri",
-    startMin: number, // minutes since midnight
-    endMin: number
-  }
-]
-```
-
-## ⚙️ Optimization & Scoring (Phase B)
-
-Once valid schedules are generated, they are **ranked deterministically**.
-
-### Lexicographic objective (IMPORTANT)
-
-> **Schedules that meet `minCredits` are always preferred if any exist.**  
-> Scoring is used **only as a tie-breaker** among schedules that satisfy this condition.
-
-⚠️ The frontend UI **assumes this behavior**, so it is a core design rule.
-
-### Scoring criteria
-
-Among eligible schedules, scoring considers:
-
-- **Credits vs `minCredits`**
-- **Idle gaps** (total idle minutes between classes)
-- **Number of days used**
-- **Daily balance** (distribution of classes across days)
-
-### Deterministic behavior
-
-- Given the same input, the same plan is always selected.
-- No randomness is used during scoring or selection.
+| Layer | Technology |
+|---|---|
+| Monorepo | pnpm workspaces |
+| API | TypeScript + Express |
+| Frontend | React + Vite + Tailwind CSS |
+| Shared logic | `@courseplan/shared` (scoring, types, course colors) |
+| Language | TypeScript throughout |
 
 ---
 
-## 📤 Generated Plan Output
+## Project Structure
 
-The API returns a fully explained plan object:
-
-```ts
-GeneratedPlan {
-  planId: string
-  selectedCourseCodes: string[]
-  selectedSections: {
-    courseCode: string
-    sectionId: string
-  }[]
-  totalCredits: number
-  score: number
-  scoreBreakdown: Record<string, number>
-  explanation: string[]
-  rejected: {
-    courseCode: string
-    reason: string
-  }[]
-}
 ```
-
-## 🖥️ Frontend Features Implemented
-
-### Course interaction
-
-- Loads courses from the API
-- Renders course cards
-- Wishlist toggle per course
-- Wishlist count indicator
-
-### Completed courses
-
-- Mark completed courses by **course code**
-- Completed count displayed
-- Completed courses are excluded from scheduling
-
-### Constraints & generation
-
-- Min credits input
-- Max credits input
-- **Generate Plan** button triggers API call
-
-### Plan output display
-
-- Selected courses and sections
-- Total credits
-- Score and score breakdown
-- Explanation text describing why the plan was chosen
-- Rejected courses with explicit reasons
+apps/
+  api/
+    src/
+      routes/courses.ts       GET /courses — serve catalog
+      routes/plan.ts          POST /plan — run scheduler, return scored plan
+      services/generateScoredPlan.ts   Core backtracking + scoring
+  web/
+    src/
+      App.tsx                 Main UI — wishlist, constraints, plan panel
+      calendar/               WeekGrid, DayColumn, TimeRail
+      api/                    Typed fetch clients for courses + plan
+packages/
+  shared/
+    src/
+      scoring/scorePlan.ts    Plan scoring (credits, gaps, days, balance)
+      types/                  Course, Plan, Constraints, Score types
+      ui/courseColors.ts      Deterministic per-course color assignment
+      utils/overlaps.ts       Time overlap detection
+    dataset/data/courses.sample.json   Sample course catalog
+```
 
 ---
 
-## 🗓️ Weekly Calendar Visualization (Read-only)
+## Quick Start
 
-- Toggle: **Show Weekly Schedule / Hide Weekly Schedule**
-- Fixed **Mon–Fri** columns
-- Fixed **8:00 AM – 8:00 PM** time window
-- Hourly + half-hour grid lines
-- Each selected section rendered as a positioned block
-- Placement based on `day`, `startMin`, and `endMin`
-- No drag/drop or editing (intentional)
+```bash
+# Install all workspace deps
+pnpm install
 
-### Calendar implementation
+# Start API (port 3001)
+pnpm --filter api dev
 
-Located in:
-
-```text
-apps/web/src/calendar/
-├── WeekGrid.tsx
-├── DayColumn.tsx
-├── TimeRail.tsx
-├── normalize.ts
-├── geometry.ts
-└── constants.ts
+# Start web frontend (port 5173)
+pnpm --filter web dev
 ```
 
-## 📡Backend API
+Copy `.env.example` to `.env` in `apps/api/` and set `PORT` if needed.
 
-### GET `/courses`
+---
 
-Returns the list of available courses and their sections.
+## API Reference
 
-### POST `/plan` (or `/generate-plan`)
+### `GET /courses`
+Returns the full course catalog.
 
-Generates a schedule based on user input.
-
-**Input:**
-
-- wishlist course codes
-- completed course codes
-- minCredits
-- maxCredits
-
-**Output:**
-
-- `GeneratedPlan` object (see shape above)
-
-## 📄 Dataset Format
-
-Sample dataset lives at:
-
-```text
-packages/shared/dataset/data/courses.sample.json
-```
-### Course structure
-
+### `POST /plan`
 ```json
 {
-  "code": "CS310",
-  "title": "Data Structures",
-  "credits": 3,
-  "prerequisites": ["CS210"],
-  "sections": [
-    {
-      "id": "001",
-      "timeSlots": [
-        { "day": "Mon", "startMin": 540, "endMin": 615 },
-        { "day": "Wed", "startMin": 540, "endMin": 615 }
-      ]
-    }
-  ]
+  "wishlist": ["CS240", "CS310"],
+  "completed": ["CS110", "CS210"],
+  "constraints": { "minCredits": 12, "maxCredits": 16 }
 }
 ```
-- Each section has a unique `id`
-- Each section defines one or more `timeSlots`
-- All conflict detection operates on `timeSlots`
-
-## 🔄 How It Works (End-to-End)
-
-1. **Filter eligible courses**
-   - Remove completed courses
-   - Enforce prerequisite requirements
-
-2. **Enumerate valid sections**
-   - Expand each course into its sections
-   - Detect conflicts using `timeSlots`
-
-3. **Backtracking search**
-   - Generate all valid, conflict-free schedules
-   - Enforce `maxCredits` during construction
-
-4. **Lexicographic selection**
-   - Prefer schedules meeting `minCredits`
-   - Score only among those
-
-5. **Deterministic scoring**
-   - Apply scoring criteria
-   - Select the best plan
-
-6. **Explain & return**
-   - Return selected sections
-   - Include explanation and rejection reasons
-
-7. **Frontend rendering**
-   - Display summary, breakdown, and calendar visualization
-
-## 🛠️ Setup & Running Locally
-
-### Install dependencies
-
-```bash
-pnpm install
-```
-### Build shared package
-
-```bash
-pnpm -C packages/shared build
-```
-### Run the API
-
-```bash
-pnpm -C apps/api dev
-```
-### Run the frontend
-```bash
-pnpm -C apps/web dev
+Returns:
+```json
+{
+  "planId": "abc123",
+  "selectedCourseCodes": ["CS240", "CS310"],
+  "selectedSections": { ... },
+  "totalCredits": 7,
+  "score": 0.87,
+  "scoreBreakdown": { "credits": 0.9, "gaps": 0.8, "days": 0.85, "balance": 0.9 },
+  "explanation": ["CS240 satisfies CS210 prerequisite", "..."],
+  "rejected": [{ "courseCode": "CS410", "reason": "Missing prerequisite CS310" }],
+  "candidatesConsidered": 12
+}
 ```
