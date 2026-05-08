@@ -1,5 +1,5 @@
-import type { CalendarEvent } from "./types";
-import { CAL_DAYS, HOUR_PX, PX_PER_MIN } from "./constants";
+import type { CalendarEvent } from "./type";
+import { CAL_DAYS } from "./constants";
 import TimeRail from "./TimeRail";
 import DayColumn from "./DayColumn";
 
@@ -10,25 +10,21 @@ type Props = {
 };
 
 export default function WeekGrid({ events, windowStartMin, windowEndMin }: Props) {
-  const totalHeightPx = (windowEndMin - windowStartMin) * PX_PER_MIN;
-  const hoursCount = Math.round((windowEndMin - windowStartMin) / 60);
 
   return (
-    <div style={{ overflowX: "hidden" }}>
-      <div style={{ display: "flex", gap: 12 }}>
+    <div style={{ overflowX: "auto", borderRadius: 12 }}>
+      <div style={{ display: "flex", gap: 10, minWidth: 520 }}>
         <TimeRail windowStartMin={windowStartMin} windowEndMin={windowEndMin} />
 
         <div
-            style={{
-                position: "relative",
-                display: "grid",
-                gridTemplateColumns: "repeat(5, minmax(160px, 1fr))",
-                gap: 12,
-                width: "min(1100px, 100%)",
-            }}
+          style={{
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: "repeat(5, minmax(120px, 1fr))",
+            gap: 8,
+            flex: 1,
+          }}
         >
-
-          {/* Day columns */}
           {CAL_DAYS.map((d) => (
             <DayColumn
               key={d}

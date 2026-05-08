@@ -7,11 +7,9 @@ export function coursesRouter() {
 
   router.get("/", (_req, res) => {
     try {
-      const rel = process.env.DATASET_PATH ?? "../../packages/dataset/data/courses.sample.json";
-
-      // resolve from the API project root
-      const apiRoot = process.cwd();
-      const abs = path.resolve(apiRoot, rel);
+      const abs = process.env.DATASET_PATH
+        ? path.resolve(process.cwd(), process.env.DATASET_PATH)
+        : path.resolve(__dirname, "../../../packages/shared/dataset/data/courses.sample.json");
 
       const raw = fs.readFileSync(abs, "utf-8");
       const courses = JSON.parse(raw);
