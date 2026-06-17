@@ -1,6 +1,6 @@
 # CoursePlan Scheduler
 
-A deterministic course scheduling system that generates a conflict-free weekly plan from a student's wishlist, completed courses, and credit constraints. Built as a TypeScript pnpm monorepo with an Express API, React + Vite frontend, and a shared scheduling/scoring package.
+A deterministic course scheduling system that generates a conflict-free weekly plan from a student's wishlist, completed courses, and credit constraints. Built as a TypeScript pnpm monorepo with an Express API, React + Vite frontend, and a shared scheduling/scoring package. 
 
 ---
 
